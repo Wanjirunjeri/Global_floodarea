@@ -68,7 +68,7 @@ def calculate_and_mask(file_rcp26, file_grid_cell_areas, file_ipcc_regions, star
      
     return masked_flooded_area_rcp26, flooded_area_rcp26
 
-Sheet_name = 'RCP2.6' #input('Please input the RCP scenario: ')
+Sheet_name = 'RCP8.5' #input('Please input the RCP scenario: ')
 
 
 def total_flooded_area(file_rcp26, file_grid_cell_areas, file_ipcc_regions, start_year, time_dim):
@@ -93,15 +93,7 @@ def total_flooded_area(file_rcp26, file_grid_cell_areas, file_ipcc_regions, star
     
     sum_df = pd.DataFrame(sum_area) 
     print(sum_df)
-    # Create a Pandas Excel writer using XlsxWriter as the engine
-    #writer = pd.ExcelWriter('flooded_area_results.xlxs')
-    #######excel = sum_df.append_to_excel('flooded_area_results.xlsx',sheet_name = 'RCP8.5',index = True) 
-    #excel.loc[0, 'Index'] = 'New Value'
-    #,engine = 'openpyxl' ,sheet_name= 'RCP2.6'
-    # Convert the dataframe to an XlsxWriter Excel object
-    #excel = sum_df.to_excel(writer, sheet_name='Sheet1')
-    # Save the Excel file
-    #excel.save()
+    
     return sum_df
 
 
@@ -112,30 +104,56 @@ def append_to_excel(dataframe, sheet_name, excel_file):
     with pd.ExcelWriter(excel_file, mode='a', engine='openpyxl') as writer:
         # Write the DataFrame to a new sheet
         dataframe.to_excel(writer, sheet_name, index=False)
-
-#annual_fa_excel = 'flooded_area_results.xlsx'
-   
-def cumulative_flooded_area(file):
-    #open  annual flooded area excel work book
-    cfa = openpyxl.load_workbook(file)
-    #open the scenario sheet
-    sheet_scenario = cfa[Sheet_name]
+ 
+def cumulative_area():
+    file = 'flooded_area_results.xlsx'
+    flooded_area26 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP2.6')
+    flooded_area85 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP8.5')
+    print(flooded_area85)
+    excell = pd.ExcelFile(os.path.join(current_directory,file))
+    print(excell)                      
+    #create a list of the sheets
+    flad = [flooded_area26,flooded_area85]
     
-    #create a dictionary to store the cumulative flooded area per decade for every data sheet
-    flooded_decade = {}
-    first_year = 2010
-    ss =[ sheet_scenario.cell(row = first_year, column = 2).value for i in range(1,sheet_scenario.max_column+1)]
-    print(ss)
+    with pd.ExcelWriter(os.path.join(current_directory, 'cumulative_flooded_area_.xlsx'), engine='openpyxl') as writer:
+        pd.DataFrame().to_excel(writer, sheet_name='DummySheet', index=False)
+        #loop over the sheets
+        
+        
+        for i, data in enumerate(flad, start=1):
+            sheet_name = f'Sheet{i}'  # Sheet names will be Sheet1, Sheet2, ...
+            
 
-nyanya = cumulative_flooded_area('flooded_area_results.xlsx')
+        #for data in flad:
+            i = 0
+            sheet = excell.sheet_names[i]
+            #If your column has a different name, replace 'Year' with the actual column name
+            year_column = data['year'] 
+            
+                       
+            # Create a new column 'Decade' representing the starting year of each decade
+            data['Decade'] = ((year_column - 2010) // 10) * 10 + 2010
+            
+            # Exclude years before 2010
+            dat = data[data['year'] > 2010]
+            #dat['DecadeLabel'] = dat['Decade'].astype(str) + '-' + (dat['Decade'] + 9).astype(str)
+
+            # Group by 'Decade' and sum the corresponding values in each column
+            result_df = dat.groupby('Decade').sum()
+            
+            # Now, result_df contains the summed values for each column grouped by decades
+            # You can save the result DataFrame back to Excel if needed
+            #result_df.to_excel(os.path.join(current_directory, 'umulative_flooded_area_.xlsx'),sheet_name = sheet)
+            #result_df[0] = dat['DecadeLabel'] 
+            
+            
+            result_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            print(result_df)
+cumulative_area()
+
+
+
+
     
-
-
-
-
-
-
-
-    
-#Masked = append_to_excel(total_flooded_area('orchidee_ipsl_rcp85_floodedarea_2006_2099.nc4','globe_grid_cell_areas.nc', 'ipcc_regions_1_44.nc', 2006,94), Sheet_name, 'flooded_area_results.xlsx')
+Masked = append_to_excel(total_flooded_area('orchidee_ipsl_rcp26_floodedarea_2006_2099.nc4','globe_grid_cell_areas.nc', 'ipcc_regions_1_44.nc', 2006,94), Sheet_name, 'flooded_area_results.xlsx')
 #print( ds)    
