@@ -149,11 +149,96 @@ def cumulative_area():
             
             result_df.to_excel(writer, sheet_name=sheet_name, index=False)
             print(result_df)
-cumulative_area()
+#cumulative_area()
 
-
-
+def average_flooded_area():
+    file = 'flooded_area_results.xlsx'
+    flooded_area26 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP2.6')
+    flooded_area85 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP8.5')
+    
+    # Filter data for the years 2070 to 2099
+    df_filtered26 = flooded_area26[(flooded_area26['year'] >= 2070) & (flooded_area26['year'] <= 2099)]
+    df_filtered85 = flooded_area85[(flooded_area85['year'] >= 2070) & (flooded_area85['year'] <= 2099)]
+    
+    # Identify the columns containing flooded area data (assuming they are numeric)
+    flooded_area_columns26 = df_filtered26.columns[1:]  # Exclude the 'Year' column
+    flooded_area_columns85 = df_filtered26.columns[1:]  # Exclude the 'Year' column
 
     
-Masked = append_to_excel(total_flooded_area('orchidee_ipsl_rcp26_floodedarea_2006_2099.nc4','globe_grid_cell_areas.nc', 'ipcc_regions_1_44.nc', 2006,94), Sheet_name, 'flooded_area_results.xlsx')
+    
+    # Calculate the average flooded area for each region (excluding non-numeric columns)
+    average_per_region26 = df_filtered26[flooded_area_columns26].mean(numeric_only=True)
+    average_per_region85 = df_filtered85[flooded_area_columns85].mean(numeric_only=True)
+
+    
+    # Create a new DataFrame with region names and mean values
+    result_df26 = pd.DataFrame({'Region': average_per_region26.index, 'Mean_Flooded_Area': average_per_region26.values})
+    result_df85 = pd.DataFrame({'Region': average_per_region85.index, 'Mean_Flooded_Area': average_per_region85.values})
+
+    
+    # Print or use the result DataFrame as needed
+    print(result_df26)
+
+#average_flooded_area()
+
+def annual_flooded_area_timeseries_graph():
+    file = 'flooded_area_results.xlsx'
+    flooded_area26 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP2.6')
+    flooded_area85 = pd.read_excel(os.path.join(current_directory,file),sheet_name = 'RCP8.5')
+    
+    # Get user input for the desired region
+    desired = input("Enter the desired region: ")
+    desired_region = int(desired)
+    # Plot timeseries of annual flooded area for the specified region
+    plt.figure(figsize=(10, 6))
+    
+    # Plot for RCP2.6
+    if desired_region in flooded_area26.columns:
+        plt.plot(flooded_area26['year'], flooded_area26[desired_region], label=f'RCP2.6 - {desired_region}', linestyle='-', marker='o')
+    else:
+        print(f"The specified region '{desired_region}' is not found in RCP2.6 data.")
+    
+    # Plot for RCP8.5
+    if desired_region in flooded_area85.columns:
+        plt.plot(flooded_area85['year'], flooded_area85[desired_region], label=f'RCP8.5 - {desired_region}', linestyle='--', marker='o')
+    else:
+        print(f"The specified region '{desired_region}' is not found in RCP8.5 data.")
+    
+    plt.xlabel('Year')
+    plt.ylabel('Annual Flooded Area (km2)')
+    plt.title(f'Timeseries of Annual Flooded Area for {desired_region}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    print(flooded_area26[3])
+#annual_flooded_area_timeseries_graph()
+
+def bargraph():
+    # Load data from Excel file
+    excel_file = 'cumulative_flooded_area_.xlsx'
+    df = pd.read_excel(excel_file, sheet_name=None)
+    print (df)
+    desired_region = input("Enter the desired region: ")
+    region = int(desired_region)
+    # Create a bar graph for each sheet (RCP2.6 and RCP8.5)
+    for sheet_name, data in df.items():
+        # Group data by decade and sum the cumulative flooded area
+        #grouped_data = data['year']
+    
+        # Plot the bar graph
+        plt.bar(data['year'],data[region], label=sheet_name)
+    
+    # Customize the plot
+    plt.xlabel('Decade')
+    plt.ylabel('Cumulative Flooded Area')
+    plt.title('Cumulative Flooded Area per Decade for RCP2.6 and RCP8.5')
+    plt.legend()
+    plt.grid(True)
+    
+    # Show the plot
+    plt.show()
+
+       
+#Masked , floods = calculate_and_mask('orchidee_ipsl_rcp26_floodedarea_2006_2099.nc4','globe_grid_cell_areas.nc', 'ipcc_regions_1_44.nc', 2006,94)
 #print( ds)    
